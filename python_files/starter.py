@@ -6,18 +6,24 @@ import time
 import mysql.connector
 from mysql.connector import Error
 import re
+import os
 
 app = Flask(__name__)
 
+with open(os.path.join(os.pardir, "api_keys/api_keys.json")) as f:
+	data = json.load(f)
+	slack_token = data["slack_token"]
+	weather_token = data["weather_token"]
+
+
 message_url = 'https://slack.com/api/chat.postMessage'
 reaction_url = 'https://slack.com/api/reactions.add'
-weather_url = 'http://api.openweathermap.org/data/2.5/weather?id=5206379&APPID=6ecd7576ae4972acac7c1bb6c5746325&units=imperial'
+weather_url = 'http://api.openweathermap.org/data/2.5/weather?id=5206379&APPID={}&units=imperial'.format(weather_token)
 start_time = 0
 re_dict = {}
 re_dict["add_groceries_re"] = "clippy.*add(.*)to.*(groceries)|(grocery list)"
 re_dict["rem_groceries_re"] = "clippy.*(?:(?:remove)|(?:delete))(.*)from.*(groceries)|(grocery list)"
 
-slack_token = 'xoxp-579903929168-582279941332-713363727334-85183fbda9aa5d50b542b7a1698ee6b4'
 header = {
 	'Content-Type': 'application/json',
 	'Authorization': 'Bearer '+slack_token
