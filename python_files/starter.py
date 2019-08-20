@@ -134,8 +134,12 @@ def rem_groceries(data, match):
 
 #called on messages which we want to handle
 def handle_event(data):
-	# if data["event"]["channel"] == 'CLWMU4HT6': #bot test channel
-	# 	echo(data)
+	try:
+		text = data["event"]["text"]
+		b = True
+	except:
+		b=False
+	if b:
 		add_groceries_match = re.search(re_dict["add_groceries_re"], data["event"]["text"].lower())
 		rem_groceries_match = re.search(re_dict["rem_groceries_re"], data["event"]["text"].lower())
 		if data["event"]["text"].replace(" ", "").lower() == "clippyweather":
