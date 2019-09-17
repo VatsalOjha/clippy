@@ -7,6 +7,9 @@ import mysql.connector
 from mysql.connector import Error
 import re
 import os
+import sys
+import shlex
+import subprocess
 
 app = Flask(__name__)
 
@@ -130,7 +133,8 @@ def rem_groceries(data, match):
 	}
 	r = requests.post(message_url,data=json.dumps(send_message), headers=header)
 
-
+def send_latex(data):
+    pass
 
 #called on messages which we want to handle
 def handle_event(data):
@@ -142,7 +146,9 @@ def handle_event(data):
 	if b:
 		add_groceries_match = re.search(re_dict["add_groceries_re"], data["event"]["text"].lower())
 		rem_groceries_match = re.search(re_dict["rem_groceries_re"], data["event"]["text"].lower())
-		if data["event"]["text"].replace(" ", "").lower() == "clippyweather":
+                if data["event"]["text"].startswith("$") and data["event"]["text"].endswith("$"):
+                    send_latex(data)
+		elif data["event"]["text"].replace(" ", "").lower() == "clippyweather":
 			send_weather(data)
 		elif data["event"]["text"].replace(" ", "").lower() == "clippygroceries":
 			all_groceries(data)
