@@ -177,12 +177,12 @@ def send_latex(data):
     subprocess.run(shlex.split(latex_cmd), check=True)
 
     # Convert the PDF to PNG
-    convert_cmd = (f"pdftoppm template1.pdf {t} -png -rx 800 "
+    convert_cmd = ("pdftoppm template1.pdf latex_image -png -rx 800 "
             "-ry 800")
     subprocess.run(shlex.split(convert_cmd), check=True)
 
     # Send the converted image to GroupMe
-    send_image(data, image_path=f"{t}-1.png")
+    send_image(data, image_path="latex_image-1.png")
 
 
 current_process = set()
