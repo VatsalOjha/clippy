@@ -4,30 +4,6 @@
 \usetikzlibrary{through,calc,matrix,shapes}
 \begin{document}
 \begin{my}
-$$$$
-\def\layersep{2.5cm}
-\begin{tikzpicture}[shorten &gt;=1pt,-&gt;,draw=black!50, node distance=\layersep]
-\tikzstyle{every pin edge}=[&lt;-,shorten &lt;=1pt]
-\tikzstyle{neuron}=[circle,fill=black!25,minimum size=17pt,inner sep=0pt]
-\tikzstyle{in neuron}=[neuron, fill=green!50];
-\tikzstyle{out neur}=[neuron, fill=red!50];
-\tikzstyle{hidden neuron}=[neuron, fill=blue!50];
-\tikzstyle{annot} = [text width=4em, text centered]
-\foreach \name / \y in {1,...,4}
-\node[in neuron, pin=left:Input \#\y] (I-\name) at (0,-\y) {};
-\foreach \name / \y in {1,...,5}
-\path[yshift=0.5cm]
-node[hidden neuron] (H-\name) at (\layersep,-\y cm) {};
-\node[out neur,pin={[pin edge={-&gt;}]right:Output}, right of=H-3] (O) {};
-\foreach \source in {1,...,4}
-\foreach \dest in {1,...,5}
-\path (I-\source) edge (H-\dest);
-\foreach \source in {1,...,5}
-\path (H-\source) edge (O);
-\node[annot,above of=H-1, node distance=1cm] (hl) {Hidden layer};
-\node[annot,left of=hl] {Input};
-\node[annot,right of=hl] {Output};
-\end{tikzpicture}
-$$$$
+$\text{Keep it } \mathbb{R}$
 \end{my}
 \end{document}
