@@ -18,9 +18,13 @@ with open(os.path.join(os.pardir, "api_keys/api_keys.json")) as f:
 	slack_token = data["slack_token"]
 	weather_token = data["weather_token"]
 
-
+latex_template_path = "template.tex"
+latex_template_replace_text = "$ equation goes here $"
+output_path = "/var/www/html/latex"
+OUTPUT_PATH = "/var/www/html/latex"
 message_url = 'https://slack.com/api/chat.postMessage'
 reaction_url = 'https://slack.com/api/reactions.add'
+file_url = 'https://slack.com/api/files.upload'
 weather_url = 'http://api.openweathermap.org/data/2.5/weather?id=5206379&APPID={}&units=imperial'.format(weather_token)
 start_time = 0
 re_dict = {}
@@ -133,29 +137,77 @@ def rem_groceries(data, match):
 	}
 	r = requests.post(message_url,data=json.dumps(send_message), headers=header)
 
-def send_latex(data):
-    pass
+def latex_doc(equation):
+    """Load the LaTeX template from the global macro path, add the input
+    equation to its appropriate place in the middle, and return the text to be
+    compiled as a string.
+    """
+    with open(latex_template_path, "r") as f:
+        template = f.read()
 
+    return template.replace(latex_template_replace_text, equation)
+
+header = {
+	'Authorization': 'Bearer '+slack_token
+}
+def send_image(data, image_path):
+    payload = {
+        "token": slack_token,
+        "channels": [data["event"]["channel"]]
+    }
+    my_file = {
+        'file': ('anime.jpg', open(image_path, 'rb'), 'jpg')
+    }
+
+    r = requests.post(file_url,params =payload, files = my_file, headers=header)
+    print(r.content)
+
+def write_file(path, text):
+    with open(path, "w") as f:
+        f.write(text)
+
+def send_latex(data):
+    doc = latex_doc(data["event"]["text"])
+    t = time.time() # save the time for consistency across later operations
+    path = "template1.tex"
+    write_file(path, doc)
+
+    # Compile the document to PDF using pdfLaTeX
+    latex_cmd = "pdflatex template1.tex"
+    subprocess.run(shlex.split(latex_cmd), check=True)
+
+    # Convert the PDF to PNG
+    convert_cmd = (f"pdftoppm template1.pdf {t} -png -rx 800 "
+            "-ry 800")
+    subprocess.run(shlex.split(convert_cmd), check=True)
+
+    # Send the converted image to GroupMe
+    send_image(data, image_path=f"{t}-1.png")
+
+
+current_process = set()
 #called on messages which we want to handle
 def handle_event(data):
-	try:
-		text = data["event"]["text"]
-		b = True
-	except:
-		b=False
-	if b:
-		add_groceries_match = re.search(re_dict["add_groceries_re"], data["event"]["text"].lower())
-		rem_groceries_match = re.search(re_dict["rem_groceries_re"], data["event"]["text"].lower())
-                if data["event"]["text"].startswith("$") and data["event"]["text"].endswith("$"):
-                    send_latex(data)
-		elif data["event"]["text"].replace(" ", "").lower() == "clippyweather":
-			send_weather(data)
-		elif data["event"]["text"].replace(" ", "").lower() == "clippygroceries":
-			all_groceries(data)
-		elif add_groceries_match:
-			add_groceries(data, add_groceries_match)
-		elif rem_groceries_match:
-			rem_groceries(data, rem_groceries_match)
+    current_process.add(json.dumps(data))
+    try:
+        text = data["event"]["text"]
+        b = True
+    except:
+        b=False
+    if b:
+        add_groceries_match = re.search(re_dict["add_groceries_re"], data["event"]["text"].lower())
+        rem_groceries_match = re.search(re_dict["rem_groceries_re"], data["event"]["text"].lower())
+        if data["event"]["text"].startswith("$") and data["event"]["text"].endswith("$"):
+            send_latex(data)
+        elif data["event"]["text"].replace(" ", "").lower() == "clippyweather":
+            send_weather(data)
+        elif data["event"]["text"].replace(" ", "").lower() == "clippygroceries":
+            all_groceries(data)
+        elif add_groceries_match:
+            add_groceries(data, add_groceries_match)
+        elif rem_groceries_match:
+            rem_groceries(data, rem_groceries_match)
+    current_process.remove(json.dunps(data))
 
 
 
@@ -166,6 +218,7 @@ def handle_event(data):
 def incoming():
 	incoming_data = request.json
 	if incoming_data["event_time"] > start_time and \
+        json.dumps(incoming_data) not in current_process and \
 	incoming_data["event"].get("subtype") != "bot_message":
 		handle_event(incoming_data)
 
