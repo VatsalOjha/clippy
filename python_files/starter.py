@@ -25,6 +25,7 @@ OUTPUT_PATH = "/var/www/html/latex"
 message_url = 'https://slack.com/api/chat.postMessage'
 reaction_url = 'https://slack.com/api/reactions.add'
 file_url = 'https://slack.com/api/files.upload'
+delete_url = 'https://slack.com/api/chat.delete'
 weather_url = 'http://api.openweathermap.org/data/2.5/weather?id=5206379&APPID={}&units=imperial'.format(weather_token)
 start_time = 0
 re_dict = {}
@@ -70,7 +71,14 @@ def all_users():
 	return {d["id"]:d["real_name"] for d in users if True}
 
 users = all_users()
-
+def delete_message(data):
+    header['Content-Type'] = 'application/json'
+    send_message = {
+            'token': slack_token,
+            'channel': data["event"]["channel"],
+            'ts': data["event"]["ts"]
+    }
+    r = requests.post(delete_url,data=json.dumps(send_message), headers=header)
 #simple function which responds echos the message
 def echo(data):
 	send_message = {
@@ -160,7 +168,6 @@ def send_image(data, image_path):
     }
 
     r = requests.post(file_url,params =payload, files = my_file, headers=header)
-    print(r.content)
 
 def write_file(path, text):
     with open(path, "w") as f:
@@ -183,6 +190,7 @@ def send_latex(data):
 
     # Send the converted image to GroupMe
     send_image(data, image_path="latex_image-1.png")
+    delete_message(data)
 
 
 current_process = set()
@@ -207,7 +215,7 @@ def handle_event(data):
             add_groceries(data, add_groceries_match)
         elif rem_groceries_match:
             rem_groceries(data, rem_groceries_match)
-    current_process.remove(json.dunps(data))
+    current_process.remove(json.dumps(data))
 
 
 
