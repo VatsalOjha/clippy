@@ -207,6 +207,9 @@ def handle_event(data):
         rem_groceries_match = re.search(re_dict["rem_groceries_re"], data["event"]["text"].lower())
         if data["event"]["text"].startswith("$") and data["event"]["text"].endswith("$"):
             send_latex(data)
+        elif data["event"]["text"].startswith("[;") and data["event"]["text"].endswith(";]"):
+            data["event"]["text"] = text.strip("[]; ")
+            send_latex(data)
         elif data["event"]["text"].replace(" ", "").lower() == "clippyweather":
             send_weather(data)
         elif data["event"]["text"].replace(" ", "").lower() == "clippygroceries":
