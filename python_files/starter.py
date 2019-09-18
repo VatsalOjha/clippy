@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import request
 import requests
+import copy
 import json
 import time
 import mysql.connector
@@ -163,18 +164,24 @@ def send_image(data, image_path):
         "token": slack_token,
         "channels": [data["event"]["channel"]]
     }
+    pic = open(image_path, 'rb')
     my_file = {
-        'file': ('anime.jpg', open(image_path, 'rb'), 'jpg')
+        'file': ('anime.jpg', pic, 'png')
     }
-
-    r = requests.post(file_url,params =payload, files = my_file, headers=header)
+    channel = data["event"]["channel"]
+    send_image_cmd = f'curl -F file=@{image_path} -F channels={channel} -H "Authorization: Bearer {slack_token}" https://slack.com/api/files.upload' 
+    subprocess.run(shlex.split(send_image_cmd), check=True)
+    #r = requests.post(file_url,params =payload, file = my_file, headers=header)
+    pic.close()
+    #print(r.content)
+    return
 
 def write_file(path, text):
     with open(path, "w") as f:
         f.write(text)
 
-def send_latex(data):
-    doc = latex_doc(data["event"]["text"])
+def send_latex(data, text):
+    doc = latex_doc(text)
     t = time.time() # save the time for consistency across later operations
     path = "template1.tex"
     write_file(path, doc)
@@ -206,10 +213,10 @@ def handle_event(data):
         add_groceries_match = re.search(re_dict["add_groceries_re"], data["event"]["text"].lower())
         rem_groceries_match = re.search(re_dict["rem_groceries_re"], data["event"]["text"].lower())
         if data["event"]["text"].startswith("$") and data["event"]["text"].endswith("$"):
-            send_latex(data)
+            send_latex(data, text)
         elif data["event"]["text"].startswith("[;") and data["event"]["text"].endswith(";]"):
-            data["event"]["text"] = text.strip("[]; ")
-            send_latex(data)
+            text = text.strip("[]; ")
+            send_latex(data, text)
         elif data["event"]["text"].replace(" ", "").lower() == "clippyweather":
             send_weather(data)
         elif data["event"]["text"].replace(" ", "").lower() == "clippygroceries":
