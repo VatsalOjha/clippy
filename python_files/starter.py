@@ -15,9 +15,10 @@ import subprocess
 app = Flask(__name__)
 
 with open(os.path.join(os.pardir, "api_keys/api_keys.json")) as f:
-	data = json.load(f)
-	slack_token = data["slack_token"]
-	weather_token = data["weather_token"]
+    data = json.load(f)
+    slack_token = data["slack_token"]
+    weather_token = data["weather_token"]
+    slack_incoming = data["slack_incoming_token"]
 
 latex_template_path = "template.tex"
 latex_template_replace_text = "$ equation goes here $"
@@ -43,9 +44,9 @@ def db_query(query, params):
 	resp = ""
 	try:
 		connection = mysql.connector.connect(host='localhost',
-											 database='slack',
-											 user='root',
-											 password='Vatsal@2409')
+                        database='slack',
+                        user='root',
+                        password='Vatsal@2409')
 		if connection.is_connected():
 			db_Info = connection.get_server_info()
 			print("Connected to MySQL Server version ", db_Info)
@@ -237,6 +238,7 @@ def incoming():
 	incoming_data = request.json
 	if incoming_data["event_time"] > start_time and \
         json.dumps(incoming_data) not in current_process and \
+        incoming_data["token"] == slack_incoming and \
 	incoming_data["event"].get("subtype") != "bot_message":
 		handle_event(incoming_data)
 
